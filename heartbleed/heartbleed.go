@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/FiloSottile/Heartbleed/heartbleed/tls"
+	"github.com/luislopes-nf/Heartbleed/heartbleed/tls"
 )
 
 type Target struct {

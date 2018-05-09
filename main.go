@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/FiloSottile/Heartbleed/heartbleed"
+	"github.com/luislopes-nf/Heartbleed/heartbleed"
 )
 
 var usageMessage = `This is a tool for detecting OpenSSL Heartbleed vulnerability (CVE-2014-0160).
