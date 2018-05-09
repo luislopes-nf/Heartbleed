@@ -33,6 +33,7 @@ func main() {
 		Besides HTTPS, currently supported services are:
 		%s`, heartbleed.Services))
 		check_cert = flag.Bool("check-cert", false, "check the server certificate")
+		good_request = flag.Bool("good-request", false, "Send a good heartbeat request instead")
 	)
 	flag.Parse()
 
@@ -55,7 +56,7 @@ func main() {
 	}
 
 	out, err := heartbleed.Heartbleed(tgt,
-		[]byte("github.com/FiloSottile/Heartbleed"), !(*check_cert))
+		[]byte("BananaVeggie"), !(*check_cert), *good_request)
 	if err == heartbleed.Safe {
 		log.Printf("%v - SAFE", tgt.HostIp)
 		os.Exit(0)
