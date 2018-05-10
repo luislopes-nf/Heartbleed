@@ -34,7 +34,10 @@ func main() {
 		%s`, heartbleed.Services))
 		check_cert = flag.Bool("check-cert", false, "check the server certificate")
 		good_request = flag.Bool("good-request", false, "Send a good heartbeat request instead")
+		add_padding = flag.Bool("add-padding", false, "Add padding to heartbeat request")
+		no_payload = flag.Bool("no-payload", false, "Don't add any payload to heartbeat request")
 	)
+	var payload = []byte("birdsandbees")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -54,9 +57,12 @@ func main() {
 			tgt.Service = u.Scheme
 		}
 	}
-
+	if *no_payload {
+		payload = []byte("")
+	}
 	out, err := heartbleed.Heartbleed(tgt,
-		[]byte("BananaVeggie"), !(*check_cert), *good_request)
+		payload, !(*check_cert),
+		*good_request, *add_padding)
 	if err == heartbleed.Safe {
 		log.Printf("%v - SAFE", tgt.HostIp)
 		os.Exit(0)
